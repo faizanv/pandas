@@ -290,7 +290,7 @@ cdef class TextReader:
         object file_handle, na_fvalues
         object true_values, false_values
         object handle
-        bint na_filter, verbose, has_usecols, has_mi_columns
+        bint na_filter, verbose, has_usecols, has_mi_columns, source_is_string
         int parser_start
         list clocks
         char *c_encoding
@@ -389,6 +389,7 @@ cdef class TextReader:
         self.parser.usecols = (usecols is not None)
 
         self._setup_parser_source(source)
+        self.source_is_string = isinstance(source, basestring)
         parser_set_default_options(self.parser)
 
         parser_init(self.parser)
@@ -578,6 +579,10 @@ cdef class TextReader:
     def close(self):
         # we need to properly close an open derived
         # filehandle here, e.g. and UTFRecoder
+        if self.source_is_string:
+            self.parser.cb_cleanup(self.parser.source)
+            self.parser.source = NULL
+
         if self.handle is not None:
             try:
                 self.handle.close()
